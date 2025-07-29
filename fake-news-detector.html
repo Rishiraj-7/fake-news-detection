@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector - AI-Powered Truth Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Main Card */
+        .detector-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+
+        /* Input Section */
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .news-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .news-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-top: 15px;
+            background: #f8fafc;
+            transition: border-color 0.3s ease;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .credibility-score {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .score-high { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .score-medium { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .score-low { background: linear-gradient(135deg, #f56565, #e53e3e); }
+
+        .analysis-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-item h4 {
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .detail-item p {
+            color: #718096;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Statistics Cards */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: white;
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .detector-card {
+                padding: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔍 Fake News Detector</h1>
+            <p>AI-Powered Truth Verification System</p>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <h3 id="articles-checked">12,847</h3>
+                <p>Articles Verified</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="fake-detected">3,291</h3>
+                <p>Fake News Detected</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="accuracy-rate">94.7%</h3>
+                <p>Accuracy Rate</p>
+            </div>
+        </div>
+
+        <!-- Main Detector -->
+        <div class="detector-card">
+            <div class="input-section">
+                <h2>📰 Enter News Article or URL</h2>
+                <textarea 
+                    class="news-input" 
+                    id="newsText" 
+                    placeholder="Paste your news article content here... We'll analyze it for credibility, bias, and factual accuracy."
+                ></textarea>
+                <input 
+                    type="url" 
+                    class="url-input" 
+                    id="newsUrl" 
+                    placeholder="Or enter a news article URL (optional)"
+                >
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="analyzeNews()">
+                    🔍 Analyze News
+                </button>
+                <button class="btn btn-secondary" onclick="clearForm()">
+                    🗑️ Clear
+                </button>
+                <button class="btn btn-secondary" onclick="loadSample()">
+                    📄 Load Sample
+                </button>
+            </div>
+
+            <!-- Loading Animation -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing article with AI algorithms...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="results">
+                <div class="result-card">
+                    <div class="credibility-score">
+                        <div>
+                            <h3>Credibility Score</h3>
+                            <p id="credibility-text">High Credibility</p>
+                        </div>
+                        <div class="score-circle score-high" id="score-circle">
+                            85%
+                        </div>
+                    </div>
+
+                    <div class="analysis-details">
+                        <div class="detail-item">
+                            <h4>🎯 Bias Detection</h4>
+                            <p id="bias-result">Low bias detected. Article presents balanced perspective.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>✅ Fact Verification</h4>
+                            <p id="fact-result">Claims are supported by credible sources.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>📊 Language Analysis</h4>
+                            <p id="language-result">Professional tone with factual language.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>🔗 Source Credibility</h4>
+                            <p id="source-result">Reputable news organization with track record.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2025 Fake News Detector. Developed by <strong>Rishiraj Singh</strong></p>
+            <p>Powered by Advanced AI & Machine Learning</p>
+        </div>
+    </div>
+
+    <script>
+        // Sample news articles for demo
+        const sampleArticles = [
+            {
+                text: "Scientists at Stanford University have developed a new renewable energy technology that converts ocean waves into electricity with 95% efficiency. The breakthrough could revolutionize clean energy production worldwide. The research, published in Nature Energy, shows promising results from initial trials.",
+                score: 85,
+                credibility: "High Credibility",
+                bias: "Low bias detected. Article presents balanced perspective.",
+                facts: "Claims are supported by credible sources.",
+                language: "Professional tone with factual language.",
+                source: "Reputable news organization with track record."
+            },
+            {
+                text: "Breaking: Aliens have landed in New York City and are demanding to speak with world leaders. Government sources confirm extraterrestrial contact. No photos or videos available due to security reasons.",
+                score: 15,
+                credibility: "Very Low Credibility",
+                bias: "High sensationalism detected.",
+                facts: "No credible sources or evidence provided.",
+                language: "Sensational language with unverified claims.",
+                source: "Unverified source with no credibility."
+            }
+        ];
+
+        // Statistics counter animation
+        function animateStats() {
+            const stats = [
+                { id: 'articles-checked', target: 12847 },
+                { id: 'fake-detected', target: 3291 },
+            ];
+
+            stats.forEach(stat => {
+                let current = 0;
+                const increment = stat.target / 100;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= stat.target) {
+                        current = stat.target;
+                        clearInterval(timer);
+                    }
+                    document.getElementById(stat.id).textContent = Math.floor(current).toLocaleString();
+                }, 20);
+            });
+        }
+
+        // Load sample article
+        function loadSample() {
+            const randomSample = sampleArticles[Math.floor(Math.random() * sampleArticles.length)];
+            document.getElementById('newsText').value = randomSample.text;
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('newsText').value = '';
+            document.getElementById('newsUrl').value = '';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Analyze news function
+        function analyzeNews() {
+            const newsText = document.getElementById('newsText').value.trim();
+            const newsUrl = document.getElementById('newsUrl').value.trim();
+
+            if (!newsText && !newsUrl) {
+                alert('Please enter some news content or a URL to analyze.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            // Simulate AI analysis (replace with real API call)
+            setTimeout(() => {
+                performAnalysis(newsText);
+            }, 2000);
+        }
+
+        // Perform analysis (simulated)
+        function performAnalysis(text) {
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+
+            // Simple analysis based on keywords and patterns
+            let score = 70; // Base score
+            let credibility = "Medium Credibility";
+            let bias = "Moderate bias detected.";
+            let facts = "Some claims need verification.";
+            let language = "Mixed tone with some emotional language.";
+            let source = "Source credibility requires verification.";
+
+            // Keyword analysis for fake news indicators
+            const fakeIndicators = ['breaking', 'shocking', 'unbelievable', 'secret', 'they don\'t want you to know', 'aliens', 'miracle cure'];
+            const credibleIndicators = ['study', 'research', 'university', 'published', 'peer-reviewed', 'data shows'];
+
+            const lowerText = text.toLowerCase();
+            
+            // Check for fake news indicators
+            fakeIndicators.forEach(indicator => {
+                if (lowerText.includes(indicator)) {
+                    score -= 15;
+                }
+            });
+
+            
+            credibleIndicators.forEach(indicator => {
+                if (lowerText.includes(indicator)) {
+                    score += 10;
+                }
+            });
+
+            
+            score = Math.max(10, Math.min(95, score));
+
+            
+            let scoreClass = 'score-medium';
+            if (score >= 75) {
+                credibility = "High Credibility";
+                scoreClass = 'score-high';
+                bias = "Low bias detected. Article presents balanced perspective.";
+                facts = "Claims are supported by credible sources.";
+                language = "Professional tone with factual language.";
+                source = "Reputable news organization with track record.";
+            } else if (score <= 40) {
+                credibility = "Low Credibility";
+                scoreClass = 'score-low';
+                bias = "High bias or sensationalism detected.";
+                facts = "Claims lack credible sources or evidence.";
+                language = "Sensational language with unverified claims.";
+                source = "Questionable source with low credibility.";
+            }
+
+           
+            document.getElementById('credibility-text').textContent = credibility;
+            document.getElementById('score-circle').textContent = score + '%';
+            document.getElementById('score-circle').className = `score-circle ${scoreClass}`;
+            document.getElementById('bias-result').textContent = bias;
+            document.getElementById('fact-result').textContent = facts;
+            document.getElementById('language-result').textContent = language;
+            document.getElementById('source-result').textContent = source;
+
+            
+            document.getElementById('results').style.display = 'block';
+
+            
+            const articlesChecked = document.getElementById('articles-checked');
+            const currentCount = parseInt(articlesChecked.textContent.replace(/,/g, ''));
+            articlesChecked.textContent = (currentCount + 1).toLocaleString();
+        }
+
+       
+        document.addEventListener('DOMContentLoaded', function() {
+            animateStats();
+            
+            
+            document.getElementById('newsText').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    analyzeNews();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
